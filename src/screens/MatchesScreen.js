@@ -77,15 +77,21 @@ export default function MatchesScreen({ navigation }) {
   }
 
   return (
-    <SafeAreaView style={styles.safeArea}>
-      <Text style={styles.title}>Matches</Text>
+    <SafeAreaView style={[styles.safeArea, styles.pagePadding]}>
+      <View style={styles.headerRow}>
+        <Text style={styles.title}>Match History</Text>
+        <TouchableOpacity style={styles.returnButton} onPress={() => navigation.navigate('Home')}>
+          <Text style={styles.returnButtonText}>Home</Text>
+        </TouchableOpacity>
+      </View>
+
       {loading ? (
         <ActivityIndicator color={colors.accent} style={{ marginTop: 20 }} />
       ) : (
         <FlatList
           data={matches}
           keyExtractor={(item) => String(item.id)}
-          contentContainerStyle={{ padding: spacing.md }}
+          contentContainerStyle={{ paddingBottom: spacing.lg }}
           ListEmptyComponent={
             <Text style={styles.emptyText}>No matches recorded yet.</Text>
           }
@@ -117,19 +123,40 @@ export default function MatchesScreen({ navigation }) {
 
 const styles = StyleSheet.create({
   safeArea: { flex: 1, backgroundColor: colors.background },
+  pagePadding: {
+    paddingHorizontal: spacing.md,
+    paddingTop: spacing.xl,
+    paddingBottom: spacing.xl,
+  },
+  headerRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: spacing.md,
+  },
   title: {
-    fontSize: 22,
-    fontWeight: '700',
+    fontSize: 28,
+    fontWeight: '800',
     color: colors.textPrimary,
-    textAlign: 'center',
-    marginTop: spacing.md,
+  },
+  returnButton: {
+    backgroundColor: colors.surface,
+    borderRadius: 999,
+    borderWidth: 1,
+    borderColor: colors.border,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
+  },
+  returnButtonText: {
+    color: colors.textPrimary,
+    fontWeight: '700',
   },
   emptyText: { color: colors.textSecondary, textAlign: 'center', marginTop: spacing.lg },
   matchCard: {
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: colors.surface,
-    borderRadius: 10,
+    borderRadius: 12,
     padding: spacing.md,
     marginBottom: spacing.sm,
     borderWidth: 1,

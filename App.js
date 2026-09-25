@@ -1,15 +1,18 @@
 import 'react-native-gesture-handler';
 import React from 'react';
-import { Text, StatusBar } from 'react-native';
+import { StatusBar } from 'react-native';
 import { NavigationContainer, DarkTheme } from '@react-navigation/native';
-import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
+import { createNativeStackNavigator } from '@react-navigation/native-stack';
 
 import { colors } from './src/theme';
+import LandingScreen from './src/screens/LandingScreen';
+import HomeScreen from './src/screens/HomeScreen';
 import PlayScreen from './src/screens/PlayScreen';
 import MatchesScreen from './src/screens/MatchesScreen';
 import PlayersScreen from './src/screens/PlayersScreen';
+import SettingsScreen from './src/screens/SettingsScreen';
 
-const Tab = createBottomTabNavigator();
+const Stack = createNativeStackNavigator();
 
 const navTheme = {
   ...DarkTheme,
@@ -23,28 +26,18 @@ const navTheme = {
   },
 };
 
-const ICONS = { Play: '🏓', Matches: '📋', Players: '👥' };
-
 export default function App() {
   return (
     <NavigationContainer theme={navTheme}>
       <StatusBar barStyle="light-content" backgroundColor={colors.background} />
-      <Tab.Navigator
-        screenOptions={({ route }) => ({
-          headerShown: false,
-          tabBarActiveTintColor: colors.accent,
-          tabBarInactiveTintColor: colors.textSecondary,
-          tabBarStyle: {
-            backgroundColor: colors.surface,
-            borderTopColor: colors.border,
-          },
-          tabBarIcon: () => <Text style={{ fontSize: 18 }}>{ICONS[route.name]}</Text>,
-        })}
-      >
-        <Tab.Screen name="Play" component={PlayScreen} />
-        <Tab.Screen name="Matches" component={MatchesScreen} />
-        <Tab.Screen name="Players" component={PlayersScreen} />
-      </Tab.Navigator>
+      <Stack.Navigator screenOptions={{ headerShown: false }}>
+        <Stack.Screen name="Landing" component={LandingScreen} />
+        <Stack.Screen name="Home" component={HomeScreen} />
+        <Stack.Screen name="Play" component={PlayScreen} />
+        <Stack.Screen name="Matches" component={MatchesScreen} />
+        <Stack.Screen name="Players" component={PlayersScreen} />
+        <Stack.Screen name="Settings" component={SettingsScreen} />
+      </Stack.Navigator>
     </NavigationContainer>
   );
 }

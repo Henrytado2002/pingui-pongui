@@ -13,20 +13,17 @@ import {
 import { useFocusEffect } from '@react-navigation/native';
 import { colors, spacing } from '../theme';
 import { fetchPlayers, createPlayer } from '../lib/db';
-import { getCurrentUserId, setCurrentUserId } from '../lib/currentUser';
 
-export default function PlayersScreen() {
+export default function PlayersScreen({ navigation }) {
   const [players, setPlayers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [newName, setNewName] = useState('');
   const [saving, setSaving] = useState(false);
-  const [meId, setMeId] = useState(null);
 
   const load = useCallback(async () => {
     try {
-      const [list, me] = await Promise.all([fetchPlayers(), getCurrentUserId()]);
+      const list = await fetchPlayers();
       setPlayers(list);
-      setMeId(me);
     } catch (e) {
       Alert.alert('Could not load players', e.message);
     } finally {
@@ -54,15 +51,14 @@ export default function PlayersScreen() {
     }
   }
 
-  async function handleSetMe(id) {
-    const next = meId === id ? null : id;
-    setMeId(next);
-    await setCurrentUserId(next);
-  }
-
   return (
-    <SafeAreaView style={styles.safeArea}>
-      <Text style={styles.title}>Players</Text>
+    <SafeAreaView style={[styles.safeArea, styles.pagePadding]}>
+      <View style={styles.headerRow}>
+        <Text style={styles.title}>Players</Text>
+        <TouchableOpacity style={styles.returnButton} onPress={() => navigation.navigate('Home')}>
+          <Text style={styles.returnButtonText}>Home</Text>
+        </TouchableOpacity>
+      </View>
 
       <View style={styles.addRow}>
         <TextInput
@@ -83,32 +79,21 @@ export default function PlayersScreen() {
         </TouchableOpacity>
       </View>
 
-      <Text style={styles.hint}>
-        Tap a player's star to mark them as you — match results are shown from
-        that player's perspective.
-      </Text>
-
       {loading ? (
         <ActivityIndicator color={colors.accent} style={{ marginTop: 20 }} />
       ) : (
         <FlatList
           data={players}
-          keyExtractor={(item) => item.id}
-          contentContainerStyle={{ padding: spacing.md }}
+          keyExtractor={(item) => String(item.id)}
+          contentContainerStyle={{ paddingBottom: spacing.lg }}
           ListEmptyComponent={
             <Text style={styles.emptyText}>No players yet — add one above.</Text>
           }
           renderItem={({ item }) => {
             const total = (item.wins ?? 0) + (item.losses ?? 0);
             const rate = total > 0 ? Math.round((item.wins / total) * 100) : null;
-            const isMe = item.id === meId;
             return (
               <View style={styles.playerCard}>
-                <TouchableOpacity onPress={() => handleSetMe(item.id)} hitSlop={10}>
-                  <Text style={[styles.star, isMe && styles.starActive]}>
-                    {isMe ? '★' : '☆'}
-                  </Text>
-                </TouchableOpacity>
                 <View style={{ flex: 1 }}>
                   <Text style={styles.playerName}>{item.name}</Text>
                   <Text style={styles.playerStats}>
@@ -127,57 +112,68 @@ export default function PlayersScreen() {
 
 const styles = StyleSheet.create({
   safeArea: { flex: 1, backgroundColor: colors.background },
+  pagePadding: {
+    paddingHorizontal: spacing.md,
+    paddingTop: spacing.xl,
+    paddingBottom: spacing.xl,
+  },
+  headerRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: spacing.md,
+  },
   title: {
-    fontSize: 22,
-    fontWeight: '700',
+    fontSize: 28,
+    fontWeight: '800',
     color: colors.textPrimary,
-    textAlign: 'center',
-    marginTop: spacing.md,
+  },
+  returnButton: {
+    backgroundColor: colors.surface,
+    borderRadius: 999,
+    borderWidth: 1,
+    borderColor: colors.border,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
+  },
+  returnButtonText: {
+    color: colors.textPrimary,
+    fontWeight: '700',
   },
   addRow: {
     flexDirection: 'row',
-    paddingHorizontal: spacing.md,
-    marginTop: spacing.md,
+    marginBottom: spacing.md,
     gap: spacing.sm,
   },
   input: {
     flex: 1,
     backgroundColor: colors.surface,
     color: colors.textPrimary,
-    borderRadius: 8,
+    borderRadius: 12,
     paddingHorizontal: spacing.md,
-    paddingVertical: 10,
+    paddingVertical: 12,
     borderWidth: 1,
     borderColor: colors.border,
   },
   addButton: {
     backgroundColor: colors.accent,
-    borderRadius: 8,
+    borderRadius: 12,
     paddingHorizontal: spacing.md,
     justifyContent: 'center',
   },
   addButtonDisabled: { opacity: 0.6 },
   addButtonText: { color: colors.background, fontWeight: '700' },
-  hint: {
-    color: colors.textSecondary,
-    fontSize: 12,
-    paddingHorizontal: spacing.md,
-    marginTop: spacing.sm,
-  },
   emptyText: { color: colors.textSecondary, textAlign: 'center', marginTop: spacing.lg },
   playerCard: {
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: colors.surface,
-    borderRadius: 10,
+    borderRadius: 12,
     padding: spacing.md,
     marginBottom: spacing.sm,
-    gap: spacing.md,
     borderWidth: 1,
     borderColor: colors.border,
   },
-  star: { fontSize: 22, color: colors.textSecondary, width: 28 },
-  starActive: { color: colors.accent },
   playerName: { color: colors.textPrimary, fontSize: 16, fontWeight: '700' },
   playerStats: { color: colors.textSecondary, fontSize: 13, marginTop: 2 },
 });
