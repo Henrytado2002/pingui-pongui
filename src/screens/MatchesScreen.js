@@ -59,7 +59,10 @@ export default function MatchesScreen({ navigation }) {
 
         const visibleList =
           scope === 'all'
-            ? list.filter((match) => !!match.closed)
+            ? list.filter((match) => {
+                const isOnHold = !match.closed && !reachedWinCondition(match.p1_score, match.p2_score);
+                return !isOnHold;
+              })
             : list.filter(
                 (match) =>
                   String(match.p1_id) === String(currentUserId) ||
@@ -155,7 +158,10 @@ export default function MatchesScreen({ navigation }) {
   }
 
   const matchesToRender = matches.filter((item) => {
-    if (scope === 'all') return item.closed;
+    if (scope === 'all') {
+      const isOnHold = !item.closed && !reachedWinCondition(item.p1_score, item.p2_score);
+      return !isOnHold;
+    }
     if (!meId) return false;
     return String(item.p1_id) === String(meId) || String(item.p2_id) === String(meId);
   });
