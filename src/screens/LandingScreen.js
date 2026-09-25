@@ -3,24 +3,19 @@ import {
   SafeAreaView,
   View,
   Text,
-  TextInput,
   TouchableOpacity,
   FlatList,
   Alert,
-  Modal,
 } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
-import { colors } from '../theme';
 import { fetchPlayers, createPlayer } from '../lib/db';
 import { getCurrentUserId, setCurrentUserId } from '../lib/currentUser';
+import CreatePlayerModal from '../components/CreatePlayerModal';
 import { landingStyles as styles } from './styles';
 
 export default function LandingScreen({ navigation }) {
   const [players, setPlayers] = useState([]);
   const [selectedId, setSelectedId] = useState(null);
-  const [newName, setNewName] = useState('');
-  const [saving, setSaving] = useState(false);
-  const [showAddPlayer, setShowAddPlayer] = useState(false);
   const [dropdownVisible, setDropdownVisible] = useState(false);
 
   const load = useCallback(async () => {
@@ -40,21 +35,18 @@ export default function LandingScreen({ navigation }) {
     }, [load])
   );
 
-  async function handleAddPlayer() {
-    const name = newName.trim();
-    if (!name) return;
-    setSaving(true);
-    try {
-      const player = await createPlayer(name);
-      setNewName('');
-      setSelectedId(player.id);
-      setShowAddPlayer(false);
-      await load();
-    } catch (e) {
-      Alert.alert('Could not add player', e.message);
-    } finally {
-      setSaving(false);
+  async function handleAddPlayer(first, last) {
+    const sanitizedFirst = first.trim();
+    const sanitizedLast = last.trim();
+    if (!sanitizedFirst || !sanitizedLast) {
+      Alert.alert('Add both names', 'Please enter a first name and a last name for the new player.');
+      return;
     }
+
+    const player = await createPlayer(sanitizedFirst, sanitizedLast);
+    setSelectedId(player.id);
+    setDropdownVisible(false);
+    await load();
   }
 
   async function handleContinue() {
@@ -81,34 +73,6 @@ export default function LandingScreen({ navigation }) {
         <Text style={styles.dropdownCaret}>▾</Text>
       </TouchableOpacity>
 
-      {!showAddPlayer ? (
-        <TouchableOpacity
-          style={styles.wideAddButton}
-          onPress={() => setShowAddPlayer(true)}
-        >
-          <Text style={styles.wideAddButtonText}>Add a new player</Text>
-        </TouchableOpacity>
-      ) : (
-        <View style={styles.addRow}>
-          <TextInput
-            style={styles.input}
-            placeholder="Add a player"
-            placeholderTextColor={colors.textSecondary}
-            value={newName}
-            onChangeText={setNewName}
-            onSubmitEditing={handleAddPlayer}
-            returnKeyType="done"
-          />
-          <TouchableOpacity
-            style={[styles.addButton, saving && styles.addButtonDisabled]}
-            onPress={handleAddPlayer}
-            disabled={saving}
-          >
-            <Text style={styles.addButtonText}>{saving ? '...' : 'Add'}</Text>
-          </TouchableOpacity>
-        </View>
-      )}
-
       <TouchableOpacity
         style={[styles.continueButton, !selectedId && styles.continueButtonDisabled]}
         onPress={handleContinue}
@@ -117,32 +81,20 @@ export default function LandingScreen({ navigation }) {
         <Text style={styles.continueButtonText}>Continue</Text>
       </TouchableOpacity>
 
-      <Modal transparent animationType="slide" visible={dropdownVisible} onRequestClose={() => setDropdownVisible(false)}>
-        <View style={styles.modalBackdrop}>
-          <View style={styles.modalSheet}>
-            <Text style={styles.modalTitle}>Select starred player</Text>
-            <FlatList
-              data={players}
-              keyExtractor={(item) => String(item.id)}
-              renderItem={({ item }) => (
-                <TouchableOpacity
-                  style={[styles.optionRow, item.id === selectedId && styles.optionRowSelected]}
-                  onPress={() => {
-                    setSelectedId(item.id);
-                    setDropdownVisible(false);
-                  }}
-                >
-                  <Text style={styles.optionText}>{item.name}</Text>
-                </TouchableOpacity>
-              )}
-              ListEmptyComponent={<Text style={styles.emptyText}>No players yet — add one above to get started.</Text>}
-            />
-            <TouchableOpacity style={styles.modalClose} onPress={() => setDropdownVisible(false)}>
-              <Text style={styles.modalCloseText}>Close</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-      </Modal>
+      <CreatePlayerModal
+        visible={dropdownVisible}
+        title="Select starred player"
+        items={players}
+        selectedId={selectedId}
+        onSelectItem={(item) => {
+          setSelectedId(item.id);
+          setDropdownVisible(false);
+        }}
+        onClose={() => setDropdownVisible(false)}
+        onCreatePlayer={handleAddPlayer}
+        emptyText="No players yet — add one to get started."
+        variant="landing"
+      />
     </SafeAreaView>
   );
 }

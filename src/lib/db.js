@@ -1,4 +1,5 @@
 import { supabase } from './supabase';
+import { normalizePlayerName } from './playerName';
 
 const MATCH_SELECT =
   '*, p1:players!scores_p1_id_fkey(id,name), p2:players!scores_p2_id_fkey(id,name)';
@@ -12,10 +13,11 @@ export async function fetchPlayers() {
   return data;
 }
 
-export async function createPlayer(name) {
+export async function createPlayer(firstName, lastName) {
+  const name = normalizePlayerName(firstName, lastName);
   const { data, error } = await supabase
     .from('players')
-    .insert({ name: name.trim() })
+    .insert({ name })
     .select()
     .single();
   if (error) throw error;

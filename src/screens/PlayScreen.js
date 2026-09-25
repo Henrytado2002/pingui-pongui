@@ -7,7 +7,6 @@ import {
   ActivityIndicator,
   Alert,
   FlatList,
-  Modal,
 } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
 import { colors, spacing } from '../theme';
@@ -16,12 +15,14 @@ import {
   fetchMatches,
   fetchMatchById,
   createMatch,
+  createPlayer,
   updateMatchScore,
   bumpPlayerRecord,
   closeMatch,
 } from '../lib/db';
 import { getCurrentUserId } from '../lib/currentUser';
 import { reachedWinCondition, higherScoreSide } from '../lib/pingpong';
+import CreatePlayerModal from '../components/CreatePlayerModal';
 import { playStyles as styles } from './styles';
 
 function PlayerScore({ name, score, onAdd, onUndo, disabled }) {
@@ -173,6 +174,20 @@ export default function PlayScreen({ route, navigation }) {
     setS1(nextS1);
     setS2(nextS2);
     persistScore(nextS1, nextS2);
+  }
+
+  async function handleAddOpponent(first, last) {
+    const sanitizedFirst = first.trim();
+    const sanitizedLast = last.trim();
+    if (!sanitizedFirst || !sanitizedLast) {
+      Alert.alert('Add both names', 'Please enter both a first name and a last name.');
+      return;
+    }
+
+    const player = await createPlayer(sanitizedFirst, sanitizedLast);
+    await loadLists();
+    setOpponentId(player.id);
+    setDropdownVisible(false);
   }
 
   async function handleStartMatch() {
@@ -337,31 +352,20 @@ export default function PlayScreen({ route, navigation }) {
         )}
       />
 
-      <Modal transparent animationType="slide" visible={dropdownVisible} onRequestClose={() => setDropdownVisible(false)}>
-        <View style={styles.modalBackdrop}>
-          <View style={styles.modalSheet}>
-            <Text style={styles.modalTitle}>Select opponent</Text>
-            <FlatList
-              data={opponentOptions}
-              keyExtractor={(item) => String(item.id)}
-              renderItem={({ item }) => (
-                <TouchableOpacity
-                  style={styles.optionRow}
-                  onPress={() => {
-                    setOpponentId(item.id);
-                    setDropdownVisible(false);
-                  }}
-                >
-                  <Text style={styles.optionText}>{item.name}</Text>
-                </TouchableOpacity>
-              )}
-            />
-            <TouchableOpacity style={styles.modalClose} onPress={() => setDropdownVisible(false)}>
-              <Text style={styles.modalCloseText}>Close</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-      </Modal>
+      <CreatePlayerModal
+        visible={dropdownVisible}
+        title="Select opponent"
+        items={opponentOptions}
+        selectedId={opponentId}
+        onSelectItem={(item) => {
+          setOpponentId(item.id);
+          setDropdownVisible(false);
+        }}
+        onClose={() => setDropdownVisible(false)}
+        onCreatePlayer={handleAddOpponent}
+        emptyText="Add another player before recording a match."
+        variant="match"
+      />
     </SafeAreaView>
   );
 }
