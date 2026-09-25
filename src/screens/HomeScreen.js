@@ -4,13 +4,12 @@ import {
   View,
   Text,
   TouchableOpacity,
-  StyleSheet,
   Alert,
 } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
-import { colors, spacing } from '../theme';
 import { fetchPlayers } from '../lib/db';
 import { getCurrentUserId, setCurrentUserId } from '../lib/currentUser';
+import { homeStyles as styles } from './styles';
 
 export default function HomeScreen({ navigation }) {
   const [userName, setUserName] = useState('Player');
@@ -83,82 +82,3 @@ export default function HomeScreen({ navigation }) {
   );
 }
 
-const styles = StyleSheet.create({
-  safeArea: { flex: 1, backgroundColor: colors.background },
-  pagePadding: {
-    paddingHorizontal: spacing.md,
-    paddingTop: spacing.xl,
-    paddingBottom: spacing.xl,
-  },
-  headerRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-  },
-  eyebrow: {
-    color: colors.accent,
-    fontSize: 12,
-    fontWeight: '800',
-    letterSpacing: 1.2,
-    textTransform: 'uppercase',
-  },
-  leaveButton: {
-    backgroundColor: colors.surface,
-    borderWidth: 1,
-    borderColor: colors.border,
-    borderRadius: 999,
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.sm,
-  },
-  leaveButtonText: {
-    color: colors.textPrimary,
-    fontWeight: '700',
-  },
-  title: {
-    marginTop: spacing.md,
-    fontSize: 30,
-    fontWeight: '800',
-    color: colors.textPrimary,
-  },
-  subtitle: {
-    marginTop: spacing.sm,
-    marginBottom: spacing.lg,
-    fontSize: 16,
-    color: colors.textSecondary,
-  },
-  buttonStack: {
-    gap: spacing.md,
-  },
-  mainButton: {
-    backgroundColor: colors.surface,
-    borderRadius: 18,
-    borderWidth: 1,
-    borderColor: colors.border,
-    paddingHorizontal: spacing.lg,
-    paddingVertical: spacing.lg,
-  },
-  mainButtonTitle: {
-    color: colors.textPrimary,
-    fontSize: 22,
-    fontWeight: '800',
-  },
-  mainButtonSub: {
-    marginTop: spacing.xs,
-    color: colors.textSecondary,
-    fontSize: 14,
-  },
-  settingsButton: {
-    marginTop: spacing.xl,
-    alignSelf: 'center',
-    backgroundColor: colors.accentSoft,
-    borderRadius: 999,
-    borderWidth: 1,
-    borderColor: colors.border,
-    paddingHorizontal: spacing.lg,
-    paddingVertical: spacing.sm,
-  },
-  settingsButtonText: {
-    color: colors.textPrimary,
-    fontWeight: '700',
-  },
-});

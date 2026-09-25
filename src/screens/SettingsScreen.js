@@ -1,9 +1,9 @@
 import React, { useCallback, useState } from 'react';
-import { SafeAreaView, View, Text, TouchableOpacity, StyleSheet, Alert } from 'react-native';
+import { SafeAreaView, View, Text, TouchableOpacity, Alert } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
-import { colors, spacing } from '../theme';
 import { fetchPlayers } from '../lib/db';
 import { getCurrentUserId } from '../lib/currentUser';
+import { settingsStyles as styles } from './styles';
 
 export default function SettingsScreen({ navigation }) {
   const [currentUser, setCurrentUser] = useState('Player');
@@ -56,54 +56,3 @@ export default function SettingsScreen({ navigation }) {
   );
 }
 
-const styles = StyleSheet.create({
-  safeArea: { flex: 1, backgroundColor: colors.background },
-  pagePadding: {
-    paddingHorizontal: spacing.md,
-    paddingTop: spacing.xl,
-    paddingBottom: spacing.xl,
-  },
-  headerRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginBottom: spacing.lg,
-  },
-  title: {
-    fontSize: 28,
-    fontWeight: '800',
-    color: colors.textPrimary,
-  },
-  returnButton: {
-    backgroundColor: colors.surface,
-    borderRadius: 999,
-    borderWidth: 1,
-    borderColor: colors.border,
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.sm,
-  },
-  returnButtonText: {
-    color: colors.textPrimary,
-    fontWeight: '700',
-  },
-  card: {
-    backgroundColor: colors.surface,
-    borderWidth: 1,
-    borderColor: colors.border,
-    borderRadius: 14,
-    padding: spacing.md,
-    marginBottom: spacing.md,
-  },
-  label: {
-    color: colors.textSecondary,
-    fontSize: 12,
-    letterSpacing: 1,
-    textTransform: 'uppercase',
-    marginBottom: spacing.xs,
-  },
-  value: {
-    color: colors.textPrimary,
-    fontSize: 16,
-    lineHeight: 24,
-  },
-});

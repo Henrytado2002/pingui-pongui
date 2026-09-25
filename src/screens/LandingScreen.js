@@ -8,12 +8,12 @@ import {
   FlatList,
   Alert,
   Modal,
-  StyleSheet,
 } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
-import { colors, spacing } from '../theme';
+import { colors } from '../theme';
 import { fetchPlayers, createPlayer } from '../lib/db';
 import { getCurrentUserId, setCurrentUserId } from '../lib/currentUser';
+import { landingStyles as styles } from './styles';
 
 export default function LandingScreen({ navigation }) {
   const [players, setPlayers] = useState([]);
@@ -70,10 +70,16 @@ export default function LandingScreen({ navigation }) {
   return (
     <SafeAreaView style={[styles.safeArea, styles.pagePadding]}>
       <Text style={styles.eyebrow}>Pingui Pongui</Text>
-      <Text style={styles.title}>Welcome back.</Text>
+      <Text style={styles.title}>Who's playing?</Text>
       <Text style={styles.subtitle}>
         Choose your starred player to start tracking matches from your perspective.
       </Text>
+
+      <Text style={styles.sectionLabel}>Starred player</Text>
+      <TouchableOpacity style={styles.dropdownButton} onPress={() => setDropdownVisible(true)}>
+        <Text style={styles.dropdownText}>{players.find((player) => String(player.id) === String(selectedId))?.name ?? 'Select your starred player'}</Text>
+        <Text style={styles.dropdownCaret}>▾</Text>
+      </TouchableOpacity>
 
       {!showAddPlayer ? (
         <TouchableOpacity
@@ -102,12 +108,6 @@ export default function LandingScreen({ navigation }) {
           </TouchableOpacity>
         </View>
       )}
-
-      <Text style={styles.sectionLabel}>Starred player</Text>
-      <TouchableOpacity style={styles.dropdownButton} onPress={() => setDropdownVisible(true)}>
-        <Text style={styles.dropdownText}>{players.find((player) => String(player.id) === String(selectedId))?.name ?? 'Select your starred player'}</Text>
-        <Text style={styles.dropdownCaret}>▾</Text>
-      </TouchableOpacity>
 
       <TouchableOpacity
         style={[styles.continueButton, !selectedId && styles.continueButtonDisabled]}
@@ -147,165 +147,3 @@ export default function LandingScreen({ navigation }) {
   );
 }
 
-const styles = StyleSheet.create({
-  safeArea: { flex: 1, backgroundColor: colors.background },
-  pagePadding: {
-    paddingHorizontal: spacing.md,
-    paddingTop: spacing.xl,
-    paddingBottom: spacing.xl,
-  },
-  eyebrow: {
-    fontSize: 12,
-    fontWeight: '700',
-    letterSpacing: 1.4,
-    color: colors.accent,
-    textTransform: 'uppercase',
-  },
-  title: {
-    marginTop: spacing.sm,
-    fontSize: 32,
-    lineHeight: 38,
-    fontWeight: '800',
-    color: colors.textPrimary,
-  },
-  subtitle: {
-    marginTop: spacing.sm,
-    marginBottom: spacing.lg,
-    fontSize: 16,
-    lineHeight: 24,
-    color: colors.textSecondary,
-  },
-  wideAddButton: {
-    backgroundColor: colors.surface,
-    borderRadius: 14,
-    borderWidth: 1,
-    borderColor: colors.border,
-    paddingVertical: spacing.md,
-    marginBottom: spacing.md,
-    alignItems: 'center',
-  },
-  wideAddButtonText: {
-    color: colors.textPrimary,
-    fontSize: 16,
-    fontWeight: '700',
-  },
-  addRow: {
-    flexDirection: 'row',
-    marginBottom: spacing.md,
-    gap: spacing.sm,
-  },
-  input: {
-    flex: 1,
-    backgroundColor: colors.surface,
-    borderWidth: 1,
-    borderColor: colors.border,
-    borderRadius: 12,
-    paddingHorizontal: spacing.md,
-    paddingVertical: 12,
-    color: colors.textPrimary,
-  },
-  addButton: {
-    backgroundColor: colors.accent,
-    borderRadius: 12,
-    paddingHorizontal: spacing.md,
-    justifyContent: 'center',
-  },
-  addButtonDisabled: { opacity: 0.6 },
-  addButtonText: {
-    color: colors.background,
-    fontWeight: '800',
-  },
-  sectionLabel: {
-    fontSize: 13,
-    letterSpacing: 0.8,
-    textTransform: 'uppercase',
-    color: colors.textSecondary,
-    marginBottom: spacing.sm,
-  },
-  dropdownButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    backgroundColor: colors.surface,
-    borderWidth: 1,
-    borderColor: colors.border,
-    borderRadius: 12,
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.md,
-    marginBottom: spacing.md,
-  },
-  dropdownText: {
-    color: colors.textPrimary,
-    fontSize: 16,
-    fontWeight: '700',
-  },
-  dropdownCaret: {
-    color: colors.accent,
-    fontSize: 20,
-    fontWeight: '700',
-  },
-  emptyText: {
-    color: colors.textSecondary,
-    textAlign: 'center',
-    marginTop: spacing.lg,
-  },
-  modalBackdrop: {
-    flex: 1,
-    justifyContent: 'center',
-    backgroundColor: 'rgba(0,0,0,0.6)',
-    padding: spacing.lg,
-  },
-  modalSheet: {
-    backgroundColor: colors.surface,
-    borderRadius: 18,
-    borderWidth: 1,
-    borderColor: colors.border,
-    padding: spacing.md,
-    maxHeight: '70%',
-  },
-  modalTitle: {
-    color: colors.textPrimary,
-    fontSize: 18,
-    fontWeight: '800',
-    marginBottom: spacing.md,
-  },
-  optionRow: {
-    backgroundColor: colors.background,
-    borderRadius: 10,
-    padding: spacing.md,
-    marginBottom: spacing.sm,
-    borderWidth: 1,
-    borderColor: colors.border,
-  },
-  optionRowSelected: {
-    borderColor: colors.accent,
-    backgroundColor: colors.accentSoft,
-  },
-  optionText: {
-    color: colors.textPrimary,
-    fontSize: 16,
-    fontWeight: '600',
-  },
-  modalClose: {
-    marginTop: spacing.md,
-    alignItems: 'center',
-    paddingVertical: spacing.sm,
-  },
-  modalCloseText: {
-    color: colors.accent,
-    fontWeight: '700',
-  },
-  continueButton: {
-    backgroundColor: colors.accent,
-    borderRadius: 14,
-    paddingVertical: 16,
-    marginTop: spacing.md,
-    alignItems: 'center',
-  },
-  continueButtonDisabled: { opacity: 0.55 },
-  continueButtonText: {
-    color: colors.background,
-    fontSize: 16,
-    fontWeight: '800',
-  },
-});

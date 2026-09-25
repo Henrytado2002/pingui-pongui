@@ -5,13 +5,13 @@ import {
   Text,
   FlatList,
   TouchableOpacity,
-  StyleSheet,
   ActivityIndicator,
   Alert,
 } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
 import { colors, spacing } from '../theme';
 import { fetchPlayers } from '../lib/db';
+import { playersStyles as styles } from './styles';
 
 const METRIC_OPTIONS = {
   wins: 'Wins',
@@ -129,98 +129,3 @@ export default function PlayersScreen({ navigation }) {
   );
 }
 
-const styles = StyleSheet.create({
-  safeArea: { flex: 1, backgroundColor: colors.background },
-  pagePadding: {
-    paddingHorizontal: spacing.md,
-    paddingTop: spacing.xl,
-    paddingBottom: spacing.xl,
-  },
-  headerRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginBottom: spacing.md,
-  },
-  title: {
-    fontSize: 28,
-    fontWeight: '800',
-    color: colors.textPrimary,
-  },
-  returnButton: {
-    backgroundColor: colors.surface,
-    borderRadius: 999,
-    borderWidth: 1,
-    borderColor: colors.border,
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.sm,
-  },
-  returnButtonText: {
-    color: colors.textPrimary,
-    fontWeight: '700',
-  },
-  metricSelector: {
-    flexDirection: 'row',
-    backgroundColor: colors.surface,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: colors.border,
-    padding: 4,
-    marginBottom: spacing.md,
-  },
-  metricButton: {
-    flex: 1,
-    paddingVertical: 10,
-    borderRadius: 10,
-    alignItems: 'center',
-  },
-  metricButtonActive: {
-    backgroundColor: colors.accent,
-  },
-  metricButtonText: {
-    color: colors.textSecondary,
-    fontWeight: '700',
-  },
-  metricButtonTextActive: {
-    color: colors.background,
-  },
-  emptyText: { color: colors.textSecondary, textAlign: 'center', marginTop: spacing.lg },
-  playerCard: {
-    backgroundColor: colors.surface,
-    borderRadius: 12,
-    padding: spacing.md,
-    marginBottom: spacing.sm,
-    borderWidth: 1,
-    borderColor: colors.border,
-  },
-  cardGold: { borderColor: '#f4c542' },
-  cardSilver: { borderColor: '#c9d0d8' },
-  cardBronze: { borderColor: '#d8925a' },
-  cardHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-  },
-  nameWrap: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.sm,
-  },
-  crown: {
-    fontSize: 24,
-  },
-  rankText: {
-    color: colors.textSecondary,
-    fontWeight: '700',
-  },
-  playerName: {
-    color: colors.textPrimary,
-    fontSize: 16,
-    fontWeight: '700',
-  },
-  playerStats: {
-    color: colors.textSecondary,
-    fontSize: 13,
-    marginTop: spacing.sm,
-  },
-});
