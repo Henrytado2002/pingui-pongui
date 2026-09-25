@@ -1,10 +1,9 @@
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 import {
   SafeAreaView,
   View,
   Text,
   FlatList,
-  TextInput,
   TouchableOpacity,
   StyleSheet,
   ActivityIndicator,
@@ -12,20 +11,24 @@ import {
 } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
 import { colors, spacing } from '../theme';
-import { fetchPlayers, createPlayer } from '../lib/db';
+import { fetchPlayers } from '../lib/db';
+
+const METRIC_OPTIONS = {
+  wins: 'Wins',
+  winRate: 'Win rate',
+};
 
 export default function PlayersScreen({ navigation }) {
   const [players, setPlayers] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [newName, setNewName] = useState('');
-  const [saving, setSaving] = useState(false);
+  const [metric, setMetric] = useState('wins');
 
   const load = useCallback(async () => {
     try {
       const list = await fetchPlayers();
       setPlayers(list);
     } catch (e) {
-      Alert.alert('Could not load players', e.message);
+      Alert.alert('Could not load leaderboard', e.message);
     } finally {
       setLoading(false);
     }
@@ -37,70 +40,86 @@ export default function PlayersScreen({ navigation }) {
     }, [load])
   );
 
-  async function handleAddPlayer() {
-    if (!newName.trim()) return;
-    setSaving(true);
-    try {
-      await createPlayer(newName);
-      setNewName('');
-      await load();
-    } catch (e) {
-      Alert.alert('Could not add player', e.message);
-    } finally {
-      setSaving(false);
-    }
+  const leaderboard = useMemo(() => {
+    return [...players]
+      .map((player) => {
+        const wins = Number(player.wins ?? 0);
+        const losses = Number(player.losses ?? 0);
+        const total = wins + losses;
+        const winRate = total > 0 ? (wins / total) * 100 : 0;
+        return { ...player, wins, losses, total, winRate };
+      })
+      .sort((a, b) => {
+        if (metric === 'wins') {
+          return b.wins - a.wins || b.winRate - a.winRate || a.name.localeCompare(b.name);
+        }
+        return b.winRate - a.winRate || b.wins - a.wins || a.name.localeCompare(b.name);
+      });
+  }, [metric, players]);
+
+  function getCrown(index) {
+    if (index === 0) return { icon: '👑', color: '#f4c542' };
+    if (index === 1) return { icon: '👑', color: '#c9d0d8' };
+    if (index === 2) return { icon: '👑', color: '#d8925a' };
+    return null;
   }
 
   return (
     <SafeAreaView style={[styles.safeArea, styles.pagePadding]}>
       <View style={styles.headerRow}>
-        <Text style={styles.title}>Players</Text>
+        <Text style={styles.title}>Leaderboard</Text>
         <TouchableOpacity style={styles.returnButton} onPress={() => navigation.navigate('Home')}>
           <Text style={styles.returnButtonText}>Home</Text>
         </TouchableOpacity>
       </View>
 
-      <View style={styles.addRow}>
-        <TextInput
-          style={styles.input}
-          placeholder="New player name"
-          placeholderTextColor={colors.textSecondary}
-          value={newName}
-          onChangeText={setNewName}
-          onSubmitEditing={handleAddPlayer}
-          returnKeyType="done"
-        />
-        <TouchableOpacity
-          style={[styles.addButton, saving && styles.addButtonDisabled]}
-          onPress={handleAddPlayer}
-          disabled={saving}
-        >
-          <Text style={styles.addButtonText}>{saving ? '...' : 'Add'}</Text>
-        </TouchableOpacity>
+      <View style={styles.metricSelector}>
+        {Object.entries(METRIC_OPTIONS).map(([value, label]) => (
+          <TouchableOpacity
+            key={value}
+            style={[styles.metricButton, metric === value && styles.metricButtonActive]}
+            onPress={() => setMetric(value)}
+          >
+            <Text style={[styles.metricButtonText, metric === value && styles.metricButtonTextActive]}>
+              {label}
+            </Text>
+          </TouchableOpacity>
+        ))}
       </View>
 
       {loading ? (
         <ActivityIndicator color={colors.accent} style={{ marginTop: 20 }} />
       ) : (
         <FlatList
-          data={players}
+          data={leaderboard}
           keyExtractor={(item) => String(item.id)}
           contentContainerStyle={{ paddingBottom: spacing.lg }}
-          ListEmptyComponent={
-            <Text style={styles.emptyText}>No players yet — add one above.</Text>
-          }
-          renderItem={({ item }) => {
-            const total = (item.wins ?? 0) + (item.losses ?? 0);
-            const rate = total > 0 ? Math.round((item.wins / total) * 100) : null;
+          ListEmptyComponent={<Text style={styles.emptyText}>No players available yet.</Text>}
+          renderItem={({ item, index }) => {
+            const crown = getCrown(index);
             return (
-              <View style={styles.playerCard}>
-                <View style={{ flex: 1 }}>
-                  <Text style={styles.playerName}>{item.name}</Text>
-                  <Text style={styles.playerStats}>
-                    {item.wins ?? 0}W - {item.losses ?? 0}L
-                    {rate !== null ? `  ·  ${rate}% win rate` : ''}
-                  </Text>
+              <View
+                style={[
+                  styles.playerCard,
+                  index === 0 && styles.cardGold,
+                  index === 1 && styles.cardSilver,
+                  index === 2 && styles.cardBronze,
+                ]}
+              >
+                <View style={styles.cardHeader}>
+                  <View style={styles.nameWrap}>
+                    <Text style={styles.rankText}>#{index + 1}</Text>
+                    <Text style={styles.playerName}>{item.name}</Text>
+                  </View>
+                  {crown ? (
+                    <Text style={[styles.crown, { color: crown.color }]}>{crown.icon}</Text>
+                  ) : null}
                 </View>
+                <Text style={styles.playerStats}>
+                  {metric === 'wins'
+                    ? `${item.wins} wins · ${item.losses} losses`
+                    : `${item.winRate.toFixed(1)}% win rate`}
+                </Text>
               </View>
             );
           }}
@@ -140,33 +159,33 @@ const styles = StyleSheet.create({
     color: colors.textPrimary,
     fontWeight: '700',
   },
-  addRow: {
+  metricSelector: {
     flexDirection: 'row',
-    marginBottom: spacing.md,
-    gap: spacing.sm,
-  },
-  input: {
-    flex: 1,
     backgroundColor: colors.surface,
-    color: colors.textPrimary,
     borderRadius: 12,
-    paddingHorizontal: spacing.md,
-    paddingVertical: 12,
     borderWidth: 1,
     borderColor: colors.border,
+    padding: 4,
+    marginBottom: spacing.md,
   },
-  addButton: {
+  metricButton: {
+    flex: 1,
+    paddingVertical: 10,
+    borderRadius: 10,
+    alignItems: 'center',
+  },
+  metricButtonActive: {
     backgroundColor: colors.accent,
-    borderRadius: 12,
-    paddingHorizontal: spacing.md,
-    justifyContent: 'center',
   },
-  addButtonDisabled: { opacity: 0.6 },
-  addButtonText: { color: colors.background, fontWeight: '700' },
+  metricButtonText: {
+    color: colors.textSecondary,
+    fontWeight: '700',
+  },
+  metricButtonTextActive: {
+    color: colors.background,
+  },
   emptyText: { color: colors.textSecondary, textAlign: 'center', marginTop: spacing.lg },
   playerCard: {
-    flexDirection: 'row',
-    alignItems: 'center',
     backgroundColor: colors.surface,
     borderRadius: 12,
     padding: spacing.md,
@@ -174,6 +193,34 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: colors.border,
   },
-  playerName: { color: colors.textPrimary, fontSize: 16, fontWeight: '700' },
-  playerStats: { color: colors.textSecondary, fontSize: 13, marginTop: 2 },
+  cardGold: { borderColor: '#f4c542' },
+  cardSilver: { borderColor: '#c9d0d8' },
+  cardBronze: { borderColor: '#d8925a' },
+  cardHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  nameWrap: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+  },
+  crown: {
+    fontSize: 24,
+  },
+  rankText: {
+    color: colors.textSecondary,
+    fontWeight: '700',
+  },
+  playerName: {
+    color: colors.textPrimary,
+    fontSize: 16,
+    fontWeight: '700',
+  },
+  playerStats: {
+    color: colors.textSecondary,
+    fontSize: 13,
+    marginTop: spacing.sm,
+  },
 });

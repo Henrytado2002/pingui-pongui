@@ -19,6 +19,7 @@ import {
   createMatch,
   updateMatchScore,
   bumpPlayerRecord,
+  closeMatch,
 } from '../lib/db';
 import { getCurrentUserId } from '../lib/currentUser';
 import { reachedWinCondition, higherScoreSide } from '../lib/pingpong';
@@ -146,21 +147,27 @@ export default function PlayScreen({ route, navigation }) {
     }
   }
 
-  function addPoint(side) {
-    if (!match || reachedWinCondition(s1, s2)) return;
+  async function addPoint(side) {
+    if (!match || match.closed || reachedWinCondition(s1, s2)) return;
     const nextS1 = side === 1 ? s1 + 1 : s1;
     const nextS2 = side === 2 ? s2 + 1 : s2;
     const nextLocked = reachedWinCondition(nextS1, nextS2);
     setS1(nextS1);
     setS2(nextS2);
-    persistScore(nextS1, nextS2);
+    await persistScore(nextS1, nextS2);
     if (nextLocked) {
+      try {
+        await closeMatch(match.id);
+        setMatch((current) => ({ ...current, closed: true, p1_score: nextS1, p2_score: nextS2 }));
+      } catch (e) {
+        Alert.alert('Could not lock match', e.message);
+      }
       Alert.alert('Match locked', 'This game is complete and can no longer be edited.');
     }
   }
 
   function undoPoint(side) {
-    if (!match || reachedWinCondition(s1, s2)) return;
+    if (!match || match.closed || reachedWinCondition(s1, s2)) return;
     const nextS1 = side === 1 ? Math.max(0, s1 - 1) : s1;
     const nextS2 = side === 2 ? Math.max(0, s2 - 1) : s2;
     setS1(nextS1);
@@ -182,7 +189,7 @@ export default function PlayScreen({ route, navigation }) {
   }
 
   async function handleFinish() {
-    if (!match) return;
+    if (!match || match.closed) return;
     if (reachedWinCondition(s1, s2)) {
       Alert.alert('Match locked', 'This match has already been locked and cannot be edited.');
       return;
@@ -191,6 +198,7 @@ export default function PlayScreen({ route, navigation }) {
     setBusy(true);
     try {
       await updateMatchScore(match.id, s1, s2);
+      await closeMatch(match.id);
       const winnerSide = higherScoreSide(s1, s2);
       if (winnerSide === 1) {
         await bumpPlayerRecord(match.p1_id, 'wins');
@@ -205,6 +213,7 @@ export default function PlayScreen({ route, navigation }) {
           ? "It's a tie — no wins or losses recorded."
           : `${winnerSide === 1 ? match.p1.name : match.p2.name} wins!`
       );
+      setMatch({ ...match, closed: true, p1_score: s1, p2_score: s2 });
       backToSelection();
     } catch (e) {
       Alert.alert('Could not finish match', e.message);
@@ -302,7 +311,7 @@ export default function PlayScreen({ route, navigation }) {
       </TouchableOpacity>
 
       {opponentOptions.length === 0 ? (
-        <Text style={styles.emptyText}>Add another player in the Players screen before recording a match.</Text>
+        <Text style={styles.emptyText}>Add another player before recording a match.</Text>
       ) : null}
 
       <TouchableOpacity

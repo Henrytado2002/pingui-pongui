@@ -7,6 +7,7 @@ import {
   TouchableOpacity,
   FlatList,
   Alert,
+  Modal,
   StyleSheet,
 } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
@@ -19,6 +20,8 @@ export default function LandingScreen({ navigation }) {
   const [selectedId, setSelectedId] = useState(null);
   const [newName, setNewName] = useState('');
   const [saving, setSaving] = useState(false);
+  const [showAddPlayer, setShowAddPlayer] = useState(false);
+  const [dropdownVisible, setDropdownVisible] = useState(false);
 
   const load = useCallback(async () => {
     try {
@@ -45,6 +48,7 @@ export default function LandingScreen({ navigation }) {
       const player = await createPlayer(name);
       setNewName('');
       setSelectedId(player.id);
+      setShowAddPlayer(false);
       await load();
     } catch (e) {
       Alert.alert('Could not add player', e.message);
@@ -71,43 +75,39 @@ export default function LandingScreen({ navigation }) {
         Choose your starred player to start tracking matches from your perspective.
       </Text>
 
-      <View style={styles.addRow}>
-        <TextInput
-          style={styles.input}
-          placeholder="Add a player"
-          placeholderTextColor={colors.textSecondary}
-          value={newName}
-          onChangeText={setNewName}
-          onSubmitEditing={handleAddPlayer}
-          returnKeyType="done"
-        />
+      {!showAddPlayer ? (
         <TouchableOpacity
-          style={[styles.addButton, saving && styles.addButtonDisabled]}
-          onPress={handleAddPlayer}
-          disabled={saving}
+          style={styles.wideAddButton}
+          onPress={() => setShowAddPlayer(true)}
         >
-          <Text style={styles.addButtonText}>{saving ? '...' : 'Add'}</Text>
+          <Text style={styles.wideAddButtonText}>Add a new player</Text>
         </TouchableOpacity>
-      </View>
+      ) : (
+        <View style={styles.addRow}>
+          <TextInput
+            style={styles.input}
+            placeholder="Add a player"
+            placeholderTextColor={colors.textSecondary}
+            value={newName}
+            onChangeText={setNewName}
+            onSubmitEditing={handleAddPlayer}
+            returnKeyType="done"
+          />
+          <TouchableOpacity
+            style={[styles.addButton, saving && styles.addButtonDisabled]}
+            onPress={handleAddPlayer}
+            disabled={saving}
+          >
+            <Text style={styles.addButtonText}>{saving ? '...' : 'Add'}</Text>
+          </TouchableOpacity>
+        </View>
+      )}
 
       <Text style={styles.sectionLabel}>Starred player</Text>
-      <FlatList
-        data={players}
-        keyExtractor={(item) => String(item.id)}
-        contentContainerStyle={{ paddingBottom: spacing.lg }}
-        ListEmptyComponent={
-          <Text style={styles.emptyText}>No players yet — add one above to get started.</Text>
-        }
-        renderItem={({ item }) => (
-          <TouchableOpacity
-            style={[styles.playerCard, item.id === selectedId && styles.playerCardActive]}
-            onPress={() => setSelectedId(item.id)}
-          >
-            <Text style={styles.playerName}>{item.name}</Text>
-            <Text style={styles.playerCheck}>{item.id === selectedId ? '✓' : '○'}</Text>
-          </TouchableOpacity>
-        )}
-      />
+      <TouchableOpacity style={styles.dropdownButton} onPress={() => setDropdownVisible(true)}>
+        <Text style={styles.dropdownText}>{players.find((player) => String(player.id) === String(selectedId))?.name ?? 'Select your starred player'}</Text>
+        <Text style={styles.dropdownCaret}>▾</Text>
+      </TouchableOpacity>
 
       <TouchableOpacity
         style={[styles.continueButton, !selectedId && styles.continueButtonDisabled]}
@@ -116,6 +116,33 @@ export default function LandingScreen({ navigation }) {
       >
         <Text style={styles.continueButtonText}>Continue</Text>
       </TouchableOpacity>
+
+      <Modal transparent animationType="slide" visible={dropdownVisible} onRequestClose={() => setDropdownVisible(false)}>
+        <View style={styles.modalBackdrop}>
+          <View style={styles.modalSheet}>
+            <Text style={styles.modalTitle}>Select starred player</Text>
+            <FlatList
+              data={players}
+              keyExtractor={(item) => String(item.id)}
+              renderItem={({ item }) => (
+                <TouchableOpacity
+                  style={[styles.optionRow, item.id === selectedId && styles.optionRowSelected]}
+                  onPress={() => {
+                    setSelectedId(item.id);
+                    setDropdownVisible(false);
+                  }}
+                >
+                  <Text style={styles.optionText}>{item.name}</Text>
+                </TouchableOpacity>
+              )}
+              ListEmptyComponent={<Text style={styles.emptyText}>No players yet — add one above to get started.</Text>}
+            />
+            <TouchableOpacity style={styles.modalClose} onPress={() => setDropdownVisible(false)}>
+              <Text style={styles.modalCloseText}>Close</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
     </SafeAreaView>
   );
 }
@@ -147,6 +174,20 @@ const styles = StyleSheet.create({
     fontSize: 16,
     lineHeight: 24,
     color: colors.textSecondary,
+  },
+  wideAddButton: {
+    backgroundColor: colors.surface,
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: colors.border,
+    paddingVertical: spacing.md,
+    marginBottom: spacing.md,
+    alignItems: 'center',
+  },
+  wideAddButtonText: {
+    color: colors.textPrimary,
+    fontSize: 16,
+    fontWeight: '700',
   },
   addRow: {
     flexDirection: 'row',
@@ -181,36 +222,78 @@ const styles = StyleSheet.create({
     color: colors.textSecondary,
     marginBottom: spacing.sm,
   },
-  playerCard: {
+  dropdownButton: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     backgroundColor: colors.surface,
+    borderWidth: 1,
+    borderColor: colors.border,
     borderRadius: 12,
     paddingHorizontal: spacing.md,
     paddingVertical: spacing.md,
-    marginBottom: spacing.sm,
-    borderWidth: 1,
-    borderColor: colors.border,
+    marginBottom: spacing.md,
   },
-  playerCardActive: {
-    borderColor: colors.accent,
-    backgroundColor: colors.accentSoft,
-  },
-  playerName: {
+  dropdownText: {
+    color: colors.textPrimary,
     fontSize: 16,
     fontWeight: '700',
-    color: colors.textPrimary,
   },
-  playerCheck: {
-    fontSize: 24,
+  dropdownCaret: {
     color: colors.accent,
+    fontSize: 20,
     fontWeight: '700',
   },
   emptyText: {
     color: colors.textSecondary,
     textAlign: 'center',
     marginTop: spacing.lg,
+  },
+  modalBackdrop: {
+    flex: 1,
+    justifyContent: 'center',
+    backgroundColor: 'rgba(0,0,0,0.6)',
+    padding: spacing.lg,
+  },
+  modalSheet: {
+    backgroundColor: colors.surface,
+    borderRadius: 18,
+    borderWidth: 1,
+    borderColor: colors.border,
+    padding: spacing.md,
+    maxHeight: '70%',
+  },
+  modalTitle: {
+    color: colors.textPrimary,
+    fontSize: 18,
+    fontWeight: '800',
+    marginBottom: spacing.md,
+  },
+  optionRow: {
+    backgroundColor: colors.background,
+    borderRadius: 10,
+    padding: spacing.md,
+    marginBottom: spacing.sm,
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  optionRowSelected: {
+    borderColor: colors.accent,
+    backgroundColor: colors.accentSoft,
+  },
+  optionText: {
+    color: colors.textPrimary,
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  modalClose: {
+    marginTop: spacing.md,
+    alignItems: 'center',
+    paddingVertical: spacing.sm,
+  },
+  modalCloseText: {
+    color: colors.accent,
+    fontWeight: '700',
   },
   continueButton: {
     backgroundColor: colors.accent,

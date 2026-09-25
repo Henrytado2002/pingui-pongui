@@ -22,13 +22,20 @@ export async function createPlayer(name) {
   return data;
 }
 
-export async function fetchMatches() {
-  const { data, error } = await supabase
-    .from('scores')
-    .select(MATCH_SELECT)
-    .order('created_at', { ascending: false });
+export async function fetchMatches({ userId = null, includeAll = false, limit = 50, offset = 0 } = {}) {
+  let query = supabase.from('scores').select(MATCH_SELECT).order('created_at', { ascending: false });
+
+  if (!includeAll && userId) {
+    query = query.or(`p1_id.eq.${userId},p2_id.eq.${userId}`);
+  }
+
+  if (limit) {
+    query = query.range(offset, offset + limit - 1);
+  }
+
+  const { data, error } = await query;
   if (error) throw error;
-  return data;
+  return data ?? [];
 }
 
 export async function fetchMatchById(id) {
@@ -55,6 +62,17 @@ export async function updateMatchScore(id, p1Score, p2Score) {
   const { data, error } = await supabase
     .from('scores')
     .update({ p1_score: p1Score, p2_score: p2Score })
+    .eq('id', id)
+    .select(MATCH_SELECT)
+    .single();
+  if (error) throw error;
+  return data;
+}
+
+export async function closeMatch(id) {
+  const { data, error } = await supabase
+    .from('scores')
+    .update({ closed: true })
     .eq('id', id)
     .select(MATCH_SELECT)
     .single();

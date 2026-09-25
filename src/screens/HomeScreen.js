@@ -71,8 +71,8 @@ export default function HomeScreen({ navigation }) {
           style={styles.mainButton}
           onPress={() => navigation.navigate('Players')}
         >
-          <Text style={styles.mainButtonTitle}>Players</Text>
-          <Text style={styles.mainButtonSub}>Manage your squads</Text>
+          <Text style={styles.mainButtonTitle}>Leaderboard</Text>
+          <Text style={styles.mainButtonSub}>See wins and win rate</Text>
         </TouchableOpacity>
       </View>
 
